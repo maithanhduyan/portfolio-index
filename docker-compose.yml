@@ -38,6 +38,7 @@ services:
       - REDIS_URL=redis://redis:6379
       - AI_SERVICE_URL=http://ai-service:8000
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
+      - JWT_SECRET=${JWT_SECRET:-change-me-in-production}
       - ALPHA_VANTAGE_KEY=${ALPHA_VANTAGE_KEY:-}
       - BINANCE_WS_URL=wss://stream.binance.com:9443/ws
       - TCBS_BASE_URL=https://apipubaws.tcbs.com.vn

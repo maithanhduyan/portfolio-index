@@ -94,6 +94,59 @@ SELECT add_retention_policy('candles',
     if_not_exists => TRUE
 );
 
+-- ─── Users & Portfolio Schema ────────────────────────────────
+CREATE TABLE IF NOT EXISTS users (
+    id            UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    email         TEXT        UNIQUE NOT NULL,
+    name          TEXT        NOT NULL,
+    password_hash TEXT        NOT NULL,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS portfolios (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id     UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    name        TEXT        NOT NULL,
+    description TEXT        NOT NULL DEFAULT '',
+    currency    TEXT        NOT NULL DEFAULT 'USD',
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS holdings (
+    id           UUID             PRIMARY KEY DEFAULT gen_random_uuid(),
+    portfolio_id UUID             NOT NULL REFERENCES portfolios(id) ON DELETE CASCADE,
+    symbol       TEXT             NOT NULL,
+    quantity     DOUBLE PRECISION NOT NULL CHECK (quantity > 0),
+    avg_price    DOUBLE PRECISION NOT NULL CHECK (avg_price >= 0),
+    buy_date     DATE,
+    note         TEXT             NOT NULL DEFAULT '',
+    created_at   TIMESTAMPTZ      NOT NULL DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ      NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS watchlist (
+    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    symbol     TEXT        NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (user_id, symbol)
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+    id         UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id    UUID        NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    symbol     TEXT        NOT NULL,
+    content    TEXT        NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_holdings_portfolio ON holdings (portfolio_id);
+CREATE INDEX IF NOT EXISTS idx_watchlist_user     ON watchlist (user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_user_symbol  ON notes (user_id, symbol);
+
 -- ─── Seed: Default Indices ───────────────────────────────────
 INSERT INTO index_snapshots (symbol, name, category) VALUES
     ('BTC',     'Bitcoin',              'crypto'),

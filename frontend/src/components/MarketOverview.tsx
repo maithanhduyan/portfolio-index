@@ -1,9 +1,12 @@
 'use client'
 
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { indexApi } from '@/lib/api'
+import { useAuthStore } from '@/lib/auth'
 import { clsx } from 'clsx'
 import numeral from 'numeral'
+import NoteEditor from './NoteEditor'
 
 interface Props {
   symbol: string
@@ -33,7 +36,12 @@ function SignalBadge({ signal }: { signal: 'BUY' | 'SELL' | 'NEUTRAL' }) {
   )
 }
 
+type OverviewTab = 'stats' | 'ai' | 'notes'
+
 export default function MarketOverview({ symbol }: Props) {
+  const [tab, setTab] = useState<OverviewTab>('stats')
+  const isAuth = useAuthStore(s => s.isAuthenticated())
+
   const { data: stats } = useQuery({
     queryKey: ['stats', symbol],
     queryFn: () => indexApi.getStats(symbol),
@@ -47,73 +55,106 @@ export default function MarketOverview({ symbol }: Props) {
     retry: false,
   })
 
+  const tabs: { key: OverviewTab; label: string }[] = [
+    { key: 'stats', label: '📊 Thống kê' },
+    { key: 'ai',    label: '🤖 AI' },
+    ...(isAuth ? [{ key: 'notes' as OverviewTab, label: '📝 Ghi chú' }] : []),
+  ]
+
   return (
-    <div className="space-y-4">
-      {/* Stats Panel */}
-      <div className="card">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3">
-          Thống kê {symbol}
-        </h3>
-        {stats ? (
-          <>
-            <Stat label="ATH"        value={numeral(stats.ath).format('0,0.00')} />
-            <Stat label="ATL"        value={numeral(stats.atl).format('0,0.00')} />
-            <Stat
-              label="7 ngày"
-              value={`${stats.change_7d >= 0 ? '+' : ''}${stats.change_7d.toFixed(2)}%`}
-              color={stats.change_7d >= 0 ? 'text-accent-green' : 'text-accent-red'}
-            />
-            <Stat
-              label="30 ngày"
-              value={`${stats.change_30d >= 0 ? '+' : ''}${stats.change_30d.toFixed(2)}%`}
-              color={stats.change_30d >= 0 ? 'text-accent-green' : 'text-accent-red'}
-            />
-            <Stat
-              label="1 năm"
-              value={`${stats.change_1y >= 0 ? '+' : ''}${stats.change_1y.toFixed(2)}%`}
-              color={stats.change_1y >= 0 ? 'text-accent-green' : 'text-accent-red'}
-            />
-            <Stat label="Biến động 30d" value={`${stats.volatility_30d.toFixed(2)}%`} />
-          </>
-        ) : (
-          <div className="space-y-2">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="h-4 bg-bg-border rounded animate-pulse" />
-            ))}
-          </div>
-        )}
+    <div className="space-y-3">
+      {/* Tab bar */}
+      <div className="flex rounded-xl bg-bg-primary p-1 gap-1">
+        {tabs.map(t => (
+          <button key={t.key} onClick={() => setTab(t.key)}
+            className={clsx(
+              'flex-1 py-1.5 text-xs font-medium rounded-lg transition-all',
+              tab === t.key
+                ? 'bg-bg-card text-text-primary shadow'
+                : 'text-text-secondary hover:text-text-primary',
+            )}>
+            {t.label}
+          </button>
+        ))}
       </div>
 
-      {/* AI Analysis Panel */}
-      <div className="card">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3">
-          Phân tích AI
-        </h3>
-        {ai ? (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <SignalBadge signal={ai.signal} />
-              <span className="text-xs text-text-secondary font-mono">
-                Tin cậy: <span className="text-text-primary">{ai.confidence}%</span>
-              </span>
+      {/* Stats */}
+      {tab === 'stats' && (
+        <div className="card">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3">
+            Thống kê {symbol}
+          </h3>
+          {stats ? (
+            <>
+              <Stat label="ATH"        value={numeral(stats.ath).format('0,0.00')} />
+              <Stat label="ATL"        value={numeral(stats.atl).format('0,0.00')} />
+              <Stat
+                label="7 ngày"
+                value={`${stats.change_7d >= 0 ? '+' : ''}${stats.change_7d.toFixed(2)}%`}
+                color={stats.change_7d >= 0 ? 'text-accent-green' : 'text-accent-red'}
+              />
+              <Stat
+                label="30 ngày"
+                value={`${stats.change_30d >= 0 ? '+' : ''}${stats.change_30d.toFixed(2)}%`}
+                color={stats.change_30d >= 0 ? 'text-accent-green' : 'text-accent-red'}
+              />
+              <Stat
+                label="1 năm"
+                value={`${stats.change_1y >= 0 ? '+' : ''}${stats.change_1y.toFixed(2)}%`}
+                color={stats.change_1y >= 0 ? 'text-accent-green' : 'text-accent-red'}
+              />
+              <Stat label="Biến động 30d" value={`${stats.volatility_30d.toFixed(2)}%`} />
+            </>
+          ) : (
+            <div className="space-y-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-4 bg-bg-border rounded animate-pulse" />
+              ))}
             </div>
-            <Stat label="Xu hướng"    value={ai.trend} />
-            <Stat label="RSI"         value={ai.rsi.toFixed(1)} />
-            <Stat label="MACD"        value={ai.macd.value.toFixed(4)} />
-            <Stat label="Hỗ trợ"      value={numeral(ai.support).format('0,0.00')} />
-            <Stat label="Kháng cự"    value={numeral(ai.resistance).format('0,0.00')} />
-            <p className="text-[11px] text-text-secondary leading-relaxed mt-2 border-t border-bg-border pt-2">
-              {ai.summary}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-2">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <div key={i} className="h-4 bg-bg-border rounded animate-pulse" />
-            ))}
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {/* AI Analysis */}
+      {tab === 'ai' && (
+        <div className="card">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-widest mb-3">
+            Phân tích AI — {symbol}
+          </h3>
+          {ai ? (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <SignalBadge signal={ai.signal} />
+                <span className="text-xs text-text-secondary font-mono">
+                  Tin cậy: <span className="text-text-primary">{ai.confidence}%</span>
+                </span>
+              </div>
+              <Stat label="Xu hướng"    value={ai.trend} />
+              <Stat label="RSI"         value={ai.rsi.toFixed(1)} />
+              <Stat label="MACD"        value={ai.macd.value.toFixed(4)} />
+              <Stat label="Hỗ trợ"      value={numeral(ai.support).format('0,0.00')} />
+              <Stat label="Kháng cự"    value={numeral(ai.resistance).format('0,0.00')} />
+              <p className="text-[11px] text-text-secondary leading-relaxed mt-2 border-t border-bg-border pt-2">
+                {ai.summary}
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className="h-4 bg-bg-border rounded animate-pulse" />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Notes (auth only) */}
+      {tab === 'notes' && isAuth && (
+        <div className="card">
+          <NoteEditor symbol={symbol} />
+        </div>
+      )}
     </div>
   )
 }
+

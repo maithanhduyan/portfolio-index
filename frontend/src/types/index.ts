@@ -70,3 +70,66 @@ export interface ChartState {
   symbol: string
   interval: ChartInterval
 }
+
+// ─── Auth & User Types ────────────────────────────────────────
+
+export interface User {
+  id: string
+  email: string
+  name: string
+  created_at: string
+}
+
+export interface AuthResponse {
+  token: string
+  user: User
+}
+
+// ─── Portfolio Types ──────────────────────────────────────────
+
+export interface Holding {
+  id: string
+  portfolio_id: string
+  symbol: string
+  quantity: number
+  avg_price: number
+  buy_date: string | null
+  note: string
+  created_at: string
+  current_price: number
+  current_value: number
+  cost: number
+  pnl: number
+  pnl_percent: number
+}
+
+export interface Portfolio {
+  id: string
+  user_id: string
+  name: string
+  description: string
+  currency: string
+  created_at: string
+  total_value: number
+  total_cost: number
+  pnl: number
+  pnl_percent: number
+  holdings: Holding[]
+}
+
+export interface WatchlistItem {
+  id: string
+  user_id: string
+  symbol: string
+  created_at: string
+}
+
+export interface Note {
+  id: string
+  user_id: string
+  symbol: string
+  content: string
+  created_at: string
+  updated_at: string
+}
+

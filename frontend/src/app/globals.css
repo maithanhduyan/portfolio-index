@@ -33,4 +33,7 @@
   .badge-red {
     @apply text-accent-red bg-accent-red/10 text-xs font-medium px-2 py-0.5 rounded-full;
   }
+  .input-field {
+    @apply w-full bg-bg-primary border border-bg-border rounded-lg px-3 py-2 text-sm text-text-primary placeholder-text-muted focus:outline-none focus:border-accent-blue transition-colors;
+  }
 }

@@ -16,6 +16,7 @@ import (
 
 	"portfolio-index/config"
 	"portfolio-index/handlers"
+	"portfolio-index/middleware"
 	"portfolio-index/repository"
 	"portfolio-index/services"
 )
@@ -59,7 +60,7 @@ func main() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: cfg.AllowedOrigins,
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization",
-		AllowMethods: "GET,POST",
+		AllowMethods: "GET,POST,PUT,DELETE",
 	}))
 
 	// ─── REST Routes ─────────────────────────────────────────────
@@ -74,6 +75,26 @@ func main() {
 	api.Get("/indices/:symbol/candles", h.GetCandles)
 	api.Get("/indices/:symbol/stats", h.GetStats)
 	api.Get("/indices/:symbol/ai-analysis", h.GetAIAnalysis)
+
+	// ─── Auth Routes ─────────────────────────────────────────────
+	auth := api.Group("/auth")
+	auth.Post("/register", h.Register)
+	auth.Post("/login", h.Login)
+
+	// ─── User Routes (JWT protected) ─────────────────────────────
+	user := api.Group("/user", middleware.JWT(cfg.JWTSecret))
+	user.Get("/watchlist", h.GetWatchlist)
+	user.Post("/watchlist/:symbol", h.AddWatchlist)
+	user.Delete("/watchlist/:symbol", h.RemoveWatchlist)
+	user.Get("/notes/:symbol", h.GetNotes)
+	user.Post("/notes/:symbol", h.CreateNote)
+	user.Put("/notes/:id", h.UpdateNote)
+	user.Delete("/notes/:id", h.DeleteNote)
+	user.Get("/portfolios", h.GetPortfolios)
+	user.Post("/portfolios", h.CreatePortfolio)
+	user.Delete("/portfolios/:id", h.DeletePortfolio)
+	user.Post("/portfolios/:id/holdings", h.AddHolding)
+	user.Delete("/portfolios/:id/holdings/:hid", h.RemoveHolding)
 
 	// ─── WebSocket ───────────────────────────────────────────────
 	wsHub := handlers.NewHub(cache)
