@@ -1,0 +1,26 @@
+# ─── Core ────────────────────────────────────────────────────
+fastapi==0.111.0
+uvicorn[standard]==0.30.1
+python-dotenv==1.0.1
+
+# ─── Database ────────────────────────────────────────────────
+asyncpg==0.29.0
+sqlalchemy[asyncio]==2.0.31
+
+# ─── Cache ───────────────────────────────────────────────────
+redis[hiredis]==5.0.7
+
+# ─── Data Analysis ───────────────────────────────────────────
+pandas>=2.1.0
+numpy>=1.26.0
+scipy>=1.11.0
+
+# ─── Machine Learning ────────────────────────────────────────
+scikit-learn>=1.3.0
+statsmodels>=0.14.0     # Time-series forecasting (ARIMA/Holt-Winters), pure Python
+
+# ─── Technical Analysis ──────────────────────────────────────
+ta>=0.11.0              # Pure Python TA: RSI, MACD, Bollinger Bands (no C++ deps)
+
+# ─── HTTP Client ─────────────────────────────────────────────
+httpx==0.27.0
